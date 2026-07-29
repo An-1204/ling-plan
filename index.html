@@ -316,11 +316,11 @@ input[type=range]{accent-color:var(--purple-3);width:100%;min-height:44px;}
     <div class="logo-text">泠的计划</div>
   </div>
   <nav class="nav-list" id="navList">
-    <div class="nav-item active" data-page="plan"><i class="fa fa-list-check"></i><span>每日计划</span></div>
+    <div class="nav-item active" data-page="plan"><i class="fa fa-check-square-o"></i><span>每日计划</span></div>
     <div class="nav-item" data-page="study"><i class="fa fa-book"></i><span>学习情况</span></div>
     <div class="nav-item" data-page="slim"><i class="fa fa-tachometer"></i><span>减肥计划</span></div>
     <div class="nav-item" data-page="russian"><i class="fa fa-language"></i><span>俄语学习</span></div>
-    <div class="nav-item" data-page="countdown"><i class="fa fa-calendar-alt"></i><span>倒数日</span></div>
+    <div class="nav-item" data-page="countdown"><i class="fa fa-calendar"></i><span>倒数日</span></div>
     <div class="nav-item" data-page="memo"><i class="fa fa-sticky-note"></i><span>备忘录</span></div>
     <div class="nav-item" data-page="history"><i class="fa fa-history"></i><span>历史回顾</span></div>
   </nav>
@@ -350,7 +350,7 @@ input[type=range]{accent-color:var(--purple-3);width:100%;min-height:44px;}
     <section class="page active" id="page-plan">
       <div class="section-head">
         <div>
-          <div class="page-title"><i class="fa fa-list-check"></i>每日计划</div>
+          <div class="page-title"><i class="fa fa-check-square-o"></i>每日计划</div>
           <div class="page-sub">今日任务卡片，点击打卡记录完成情况</div>
         </div>
         <button class="btn btn-primary" onclick="Plan.addCard()"><i class="fa fa-plus"></i>添加计划卡</button>
@@ -467,7 +467,7 @@ input[type=range]{accent-color:var(--purple-3);width:100%;min-height:44px;}
     <section class="page" id="page-countdown">
       <div class="section-head">
         <div>
-          <div class="page-title"><i class="fa fa-calendar-alt"></i>倒数日 · 正数日</div>
+          <div class="page-title"><i class="fa fa-calendar"></i>倒数日 · 正数日</div>
           <div class="page-sub">记录重要日期，倒数未来，正数坚持</div>
         </div>
         <button class="btn btn-primary" onclick="Countdown.add()"><i class="fa fa-plus"></i>添加目标</button>
@@ -1136,7 +1136,7 @@ function Countdown_render(){
     const bigNum=numText?`<span style="font-size:40px;font-weight:800;background:var(--grad-main);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">${numText}</span>`:'';
     return `<div class="card plan-card">
       <div class="pc-head">
-        <div class="pc-title"><i class="fa fa-calendar-alt" style="color:var(--purple-3);"></i>${g.name}</div>
+        <div class="pc-title"><i class="fa fa-calendar" style="color:var(--purple-3);"></i>${g.name}</div>
         <button class="del-x" onclick="Countdown.del(${i})"><i class="fa fa-times"></i></button>
       </div>
       <div style="font-size:12px;color:var(--text-light);margin:2px 0 8px;">${typeLabel} · ${g.date}</div>
