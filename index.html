@@ -1,0 +1,1229 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover">
+<title>泠的计划 · 个人工作台</title>
+<!-- PWA 元数据：让手机"添加到主屏幕"后像原生App -->
+<meta name="theme-color" content="#a78bfa">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="泠的计划">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="application-name" content="泠的计划">
+<!-- 内嵌 SVG 图标（粉紫渐变心形），避免外部依赖 -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23a78bfa'/%3E%3Cstop offset='1' stop-color='%23ec4899'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath fill='url(%23g)' d='M50 88 L20 58 a22 22 0 0 1 30-30 a22 22 0 0 1 30 30 z'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23a78bfa'/%3E%3Cpath fill='%23fff' d='M50 78 L28 56 a16 16 0 0 1 22-22 a16 16 0 0 1 22 22 z'/%3E%3C/svg%3E">
+<!-- Font Awesome 图标库 -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+<!-- ECharts 图表库 -->
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+<style>
+/* ============ 全局变量与基础样式 ============ */
+:root{
+  --bg:#fff;
+  --purple-1:#ede9fe;   /* 淡紫 */
+  --purple-2:#c4b5fd;
+  --purple-3:#a78bfa;
+  --pink-1:#fce7f3;     /* 粉 */
+  --pink-2:#f9a8d4;
+  --pink-3:#ec4899;
+  --grad-main:linear-gradient(135deg,#a78bfa 0%,#ec4899 100%);
+  --grad-soft:linear-gradient(135deg,#ede9fe 0%,#fce7f3 100%);
+  --text:#3b304a;
+  --text-light:#8b7da3;
+  --card:#fff;
+  --shadow:0 6px 22px rgba(167,139,250,.16);
+  --shadow-sm:0 3px 10px rgba(167,139,250,.12);
+  --radius:18px;
+  --radius-sm:12px;
+  --nav-w:240px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  background:var(--bg);color:var(--text);font-size:15px;line-height:1.6;
+  overflow-x:hidden;
+}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit;}
+input,textarea,select{font-family:inherit;font-size:inherit;color:var(--text);}
+::-webkit-scrollbar{width:8px;height:8px;}
+::-webkit-scrollbar-thumb{background:var(--purple-2);border-radius:8px;}
+::-webkit-scrollbar-track{background:transparent;}
+
+/* ============ 左侧导航栏 ============ */
+.sidebar{
+  position:fixed;left:0;top:0;bottom:0;width:var(--nav-w);
+  background:linear-gradient(180deg,#f5f3ff 0%,#fdf2f8 100%);
+  border-right:1px solid rgba(167,139,250,.18);
+  padding:24px 16px;display:flex;flex-direction:column;z-index:100;
+}
+.logo{display:flex;align-items:center;gap:10px;padding:6px 10px 22px;}
+.logo-icon{
+  width:42px;height:42px;border-radius:14px;background:var(--grad-main);
+  display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;
+  box-shadow:var(--shadow-sm);
+}
+.logo-text{font-size:18px;font-weight:700;background:var(--grad-main);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.nav-list{display:flex;flex-direction:column;gap:6px;flex:1;}
+.nav-item{
+  display:flex;align-items:center;gap:12px;padding:13px 14px;border-radius:var(--radius-sm);
+  color:var(--text-light);font-weight:500;transition:all .25s;min-height:44px;cursor:pointer;
+}
+.nav-item i{width:20px;text-align:center;font-size:16px;}
+.nav-item:hover{background:rgba(167,139,250,.12);color:var(--purple-3);}
+.nav-item.active{background:var(--grad-main);color:#fff;box-shadow:var(--shadow-sm);}
+.nav-item.active i{color:#fff;}
+.nav-foot{font-size:12px;color:var(--text-light);text-align:center;padding:10px 0;opacity:.7;}
+
+/* ============ 主内容区 ============ */
+.main{margin-left:var(--nav-w);min-height:100vh;display:flex;flex-direction:column;}
+
+/* 顶部总览条 */
+.topbar{
+  position:sticky;top:0;z-index:50;background:rgba(255,255,255,.85);backdrop-filter:blur(12px);
+  border-bottom:1px solid rgba(167,139,250,.15);padding:16px 28px;
+  display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;
+}
+.topbar-left{display:flex;flex-direction:column;gap:2px;}
+.greeting{font-size:18px;font-weight:700;}
+.topbar-date{font-size:13px;color:var(--text-light);}
+.stats{display:flex;gap:14px;flex-wrap:wrap;}
+.stat-chip{
+  background:var(--grad-soft);border-radius:var(--radius-sm);padding:8px 16px;
+  display:flex;flex-direction:column;align-items:center;min-width:96px;
+}
+.stat-chip .num{font-size:20px;font-weight:700;color:var(--purple-3);}
+.stat-chip .lbl{font-size:11px;color:var(--text-light);}
+.stat-chip.done .num{color:var(--pink-3);}
+
+/* 汉堡菜单（移动端） */
+.hamburger{display:none;font-size:22px;color:var(--purple-3);padding:8px;min-width:44px;min-height:44px;}
+.scrim{display:none;position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:99;}
+
+/* ============ 页面容器 ============ */
+.content{padding:26px 28px 60px;flex:1;}
+.page{display:none;animation:fadeIn .45s ease;}
+.page.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+
+/* 页面标题 */
+.page-title{font-size:22px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:10px;}
+.page-title i{color:var(--purple-3);}
+.page-sub{font-size:13px;color:var(--text-light);margin-bottom:20px;}
+
+/* ============ 卡片通用 ============ */
+.card{
+  background:var(--card);border-radius:var(--radius);padding:20px;
+  box-shadow:var(--shadow-sm);border:1px solid rgba(167,139,250,.1);transition:box-shadow .25s,transform .25s;
+}
+.card:hover{box-shadow:var(--shadow);transform:translateY(-2px);}
+.grid{display:grid;gap:18px;}
+.grid-3{grid-template-columns:repeat(auto-fill,minmax(280px,1fr));}
+.grid-5{grid-template-columns:repeat(auto-fill,minmax(260px,1fr));}
+.section{margin-bottom:26px;}
+.section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;}
+.section-head h3{font-size:17px;font-weight:700;display:flex;align-items:center;gap:8px;}
+.section-head h3 i{color:var(--pink-3);}
+
+/* 按钮 */
+.btn{
+  display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border-radius:var(--radius-sm);
+  font-weight:600;font-size:14px;transition:all .2s;min-height:44px;justify-content:center;
+}
+.btn-primary{background:var(--grad-main);color:#fff;box-shadow:var(--shadow-sm);}
+.btn-primary:hover{filter:brightness(1.08);transform:translateY(-1px);}
+.btn-soft{background:var(--grad-soft);color:var(--purple-3);}
+.btn-soft:hover{background:var(--purple-1);}
+.btn-ghost{background:transparent;border:1px solid var(--purple-2);color:var(--purple-3);}
+.btn-ghost:hover{background:var(--purple-1);}
+.btn-sm{padding:6px 12px;font-size:12px;min-height:32px;border-radius:8px;}
+.btn-check{background:#e0e7ff;color:#6366f1;}
+.btn-checked{background:#22c55e;color:#fff;}
+.btn-danger{background:#fee2e2;color:#ef4444;}
+.btn-danger:hover{background:#fecaca;}
+
+/* 删除小按钮 */
+.del-x{
+  width:26px;height:26px;border-radius:50%;background:rgba(239,68,68,.12);color:#ef4444;
+  display:inline-flex;align-items:center;justify-content:center;font-size:13px;transition:all .2s;
+}
+.del-x:hover{background:#ef4444;color:#fff;}
+
+/* 输入框 */
+.inp{
+  border:1.5px solid rgba(167,139,250,.3);border-radius:var(--radius-sm);padding:10px 14px;
+  background:#fafaff;transition:border-color .2s,box-shadow .2s;min-height:44px;width:100%;
+}
+.inp:focus{outline:none;border-color:var(--purple-3);box-shadow:0 0 0 3px rgba(167,139,250,.15);}
+.inp-num{max-width:90px;}
+
+/* ============ 每日计划卡片 ============ */
+.plan-card{position:relative;display:flex;flex-direction:column;gap:10px;}
+.plan-card .pc-head{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.plan-card .pc-title{font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px;}
+.plan-card .pc-title i{color:var(--purple-3);}
+.plan-card .pc-body{font-size:13px;color:var(--text-light);min-height:32px;}
+.plan-card .pc-foot{display:flex;justify-content:flex-end;margin-top:4px;}
+.badge-done{position:absolute;top:14px;right:40px;font-size:11px;background:#dcfce7;color:#16a34a;padding:3px 10px;border-radius:20px;font-weight:600;}
+
+/* ============ 倒计时 ============ */
+.countdown-box{
+  background:var(--grad-main);border-radius:var(--radius);padding:26px;color:#fff;text-align:center;
+  box-shadow:var(--shadow);position:relative;overflow:hidden;
+}
+.countdown-box::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 80% 20%,rgba(255,255,255,.25),transparent 50%);}
+.countdown-box .cd-lbl{font-size:14px;opacity:.9;position:relative;}
+.countdown-box .cd-num{font-size:56px;font-weight:800;line-height:1.1;position:relative;text-shadow:0 4px 18px rgba(0,0,0,.15);}
+.countdown-box .cd-unit{font-size:18px;font-weight:600;position:relative;}
+
+/* ============ 励志句 ============ */
+.quote-card{
+  background:var(--grad-soft);border-radius:var(--radius);padding:22px 26px;position:relative;
+  border:1px solid rgba(236,72,153,.15);overflow:hidden;
+}
+.quote-card .q-mark{position:absolute;font-size:64px;opacity:.12;color:var(--pink-3);top:-6px;left:14px;font-family:Georgia,serif;}
+.quote-card .q-text{font-size:17px;font-weight:600;line-height:1.7;color:var(--text);position:relative;padding-left:10px;}
+.quote-card .q-foot{display:flex;justify-content:flex-end;margin-top:12px;}
+
+/* ============ 学习条目 ============ */
+.record-list{display:flex;flex-direction:column;gap:6px;margin-top:10px;}
+.record-item{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 12px;
+  background:#faf5ff;border-radius:10px;font-size:13px;animation:fadeIn .3s;
+}
+.record-item .ri-content{flex:1;}
+.record-item .ri-min{color:var(--pink-3);font-weight:600;white-space:nowrap;}
+.add-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+.add-row .inp{flex:1;min-width:0;}
+.add-row .inp-num{flex:0 0 90px;}
+
+/* 进度条 */
+.progress-wrap{margin-top:10px;}
+.progress-head{display:flex;justify-content:space-between;font-size:12px;color:var(--text-light);margin-bottom:4px;}
+.progress-bar{height:8px;background:#ede9fe;border-radius:8px;overflow:hidden;}
+.progress-fill{height:100%;background:var(--grad-main);border-radius:8px;transition:width .4s;}
+input[type=range]{accent-color:var(--purple-3);width:100%;min-height:44px;}
+
+/* 抖音视频列表 */
+.video-list{margin-top:10px;display:flex;flex-direction:column;gap:8px;}
+.video-item{
+  display:flex;align-items:center;gap:10px;padding:10px 12px;background:#fff5fb;border-radius:10px;
+  border:1px solid rgba(236,72,153,.1);transition:background .2s;
+}
+.video-item:hover{background:#fce7f3;}
+.video-item .vi-icon{width:34px;height:34px;border-radius:8px;background:var(--grad-main);color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.video-item .vi-title{font-size:13px;font-weight:500;flex:1;}
+.video-item .vi-meta{font-size:11px;color:var(--text-light);}
+
+/* 科目卡片头部 */
+.subj-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+.subj-name{font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px;}
+.subj-emoji{font-size:20px;}
+.subj-total{font-size:12px;color:var(--text-light);background:var(--grad-soft);padding:3px 10px;border-radius:20px;font-weight:600;color:var(--purple-3);}
+
+/* ============ 减肥计划 ============ */
+.weight-row{display:flex;gap:14px;flex-wrap:wrap;}
+.weight-row .field{flex:1;min-width:140px;}
+.field label{font-size:13px;color:var(--text-light);display:block;margin-bottom:6px;}
+.check-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;}
+.check-item{
+  display:flex;align-items:center;gap:10px;padding:14px;border-radius:var(--radius-sm);
+  background:#faf5ff;cursor:pointer;transition:all .2s;min-height:44px;border:2px solid transparent;
+}
+.check-item:hover{background:#f3e8ff;}
+.check-item.checked{background:#dcfce5;border-color:#86efac;}
+.check-item.checked .ci-box{background:#22c55e;color:#fff;border-color:#22c55e;}
+.ci-box{width:24px;height:24px;border-radius:7px;border:2px solid var(--purple-2);display:flex;align-items:center;justify-content:center;color:transparent;transition:all .2s;flex-shrink:0;}
+.ci-text{font-size:14px;font-weight:500;}
+.log-list{margin-top:10px;display:flex;flex-direction:column;gap:6px;max-height:240px;overflow-y:auto;}
+.log-item{padding:8px 12px;background:#faf5ff;border-radius:10px;font-size:13px;display:flex;justify-content:space-between;gap:8px;}
+.log-time{color:var(--text-light);font-size:11px;white-space:nowrap;}
+.chart-box{width:100%;height:320px;}
+.ai-box{background:var(--grad-soft);border-radius:var(--radius-sm);padding:16px;font-size:14px;line-height:1.8;}
+.ai-box .ai-title{font-weight:700;color:var(--purple-3);margin-bottom:6px;display:flex;align-items:center;gap:6px;}
+.range-tabs{display:flex;gap:6px;}
+.range-tabs .btn{padding:6px 14px;font-size:12px;min-height:36px;}
+
+/* ============ 备忘录 ============ */
+.memo-item{padding:14px;background:#faf5ff;border-radius:var(--radius-sm);display:flex;justify-content:space-between;align-items:flex-start;gap:10px;animation:fadeIn .3s;}
+.memo-content{flex:1;word-break:break-word;}
+.memo-time{font-size:11px;color:var(--text-light);margin-top:4px;}
+
+/* ============ 历史回顾 ============ */
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;max-width:560px;}
+.cal-cell{aspect-ratio:1;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;background:#f5f3ff;position:relative;cursor:pointer;transition:all .2s;min-height:44px;}
+.cal-cell:hover{transform:scale(1.06);}
+.cal-cell.empty{background:transparent;cursor:default;}
+.cal-cell.today{outline:2px solid var(--pink-3);}
+.cal-cell.has-data{background:var(--grad-main);color:#fff;font-weight:600;}
+.cal-cell.has-data.some{background:linear-gradient(135deg,#c4b5fd,#f9a8d4);color:#fff;}
+.cal-week{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;max-width:560px;margin-bottom:6px;}
+.cal-week div{text-align:center;font-size:12px;color:var(--text-light);}
+.detail-box{margin-top:14px;padding:14px;background:#faf5ff;border-radius:var(--radius-sm);font-size:13px;display:none;}
+.detail-box.show{display:block;animation:fadeIn .3s;}
+
+/* ============ 自定义模态框 ============ */
+.modal-mask{display:none;position:fixed;inset:0;background:rgba(59,48,74,.45);backdrop-filter:blur(4px);z-index:1000;align-items:center;justify-content:center;padding:20px;}
+.modal-mask.show{display:flex;animation:fadeIn .2s;}
+.modal-box{background:#fff;border-radius:var(--radius);padding:24px;max-width:380px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.25);animation:modalIn .3s;}
+@keyframes modalIn{from{transform:scale(.9);opacity:0;}to{transform:scale(1);opacity:1;}}
+.modal-title{font-size:17px;font-weight:700;margin-bottom:10px;}
+.modal-body{font-size:14px;color:var(--text-light);margin-bottom:20px;}
+.modal-foot{display:flex;gap:10px;justify-content:flex-end;}
+.modal-input{margin-bottom:16px;}
+
+/* Toast 提示 */
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-100px);background:var(--text);color:#fff;padding:12px 24px;border-radius:var(--radius-sm);font-size:14px;z-index:2000;transition:transform .3s;box-shadow:0 8px 30px rgba(0,0,0,.2);}
+.toast.show{transform:translateX(-50%) translateY(0);}
+
+/* ============ 移动端适配 ============ */
+@media(max-width:768px){
+  :root{--nav-w:0px;}
+  .sidebar{transform:translateX(-100%);transition:transform .3s;width:240px;box-shadow:0 0 40px rgba(0,0,0,.2);}
+  .sidebar.open{transform:translateX(0);}
+  .hamburger{display:flex;align-items:center;justify-content:center;}
+  .scrim.show{display:block;}
+  .main{margin-left:0;}
+  .topbar{padding:12px 16px;flex-direction:column;align-items:stretch;gap:10px;}
+  .topbar-left{flex-direction:row;justify-content:space-between;align-items:center;gap:10px;}
+  .greeting{font-size:16px;}
+  .stats{justify-content:space-between;gap:8px;}
+  .stat-chip{flex:1;min-width:0;padding:6px 8px;}
+  .stat-chip .num{font-size:16px;}
+  .content{padding:16px 14px 50px;}
+  .grid-3,.grid-5{grid-template-columns:1fr;}
+  .countdown-box .cd-num{font-size:42px;}
+  .add-row{flex-direction:column;}
+  .add-row .inp-num{flex:1;max-width:none;}
+  .btn{width:100%;}
+  .btn-sm{width:auto;}
+  .weight-row{flex-direction:column;}
+  .quote-card .q-text{font-size:15px;}
+}
+</style>
+</head>
+<body>
+
+<!-- 汉堡菜单遮罩 -->
+<div class="scrim" id="scrim"></div>
+
+<!-- ============ 左侧导航 ============ -->
+<aside class="sidebar" id="sidebar">
+  <div class="logo">
+    <div class="logo-icon"><i class="fa fa-heart"></i></div>
+    <div class="logo-text">泠的计划</div>
+  </div>
+  <nav class="nav-list" id="navList">
+    <div class="nav-item active" data-page="plan"><i class="fa fa-list-check"></i><span>每日计划</span></div>
+    <div class="nav-item" data-page="study"><i class="fa fa-book"></i><span>学习情况</span></div>
+    <div class="nav-item" data-page="slim"><i class="fa fa-tachometer"></i><span>减肥计划</span></div>
+    <div class="nav-item" data-page="russian"><i class="fa fa-language"></i><span>俄语学习</span></div>
+    <div class="nav-item" data-page="memo"><i class="fa fa-sticky-note"></i><span>备忘录</span></div>
+    <div class="nav-item" data-page="history"><i class="fa fa-history"></i><span>历史回顾</span></div>
+  </nav>
+  <div class="nav-foot">WorkBuddy · 泠专属</div>
+</aside>
+
+<!-- ============ 主内容 ============ -->
+<div class="main">
+  <!-- 顶部总览条 -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="hamburger" id="hamburger"><i class="fa fa-bars"></i></button>
+      <div>
+        <div class="greeting" id="greeting">你好，泠</div>
+        <div class="topbar-date" id="topDate"></div>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat-chip done"><span class="num" id="statDone">0</span><span class="lbl">今日完成</span></div>
+      <div class="stat-chip"><span class="num" id="statStudy">0.0h</span><span class="lbl">学习总时长</span></div>
+      <div class="stat-chip"><span class="num" id="statWeight">0.0</span><span class="lbl">已减重量(kg)</span></div>
+    </div>
+  </header>
+
+  <div class="content">
+    <!-- 1. 每日计划 -->
+    <section class="page active" id="page-plan">
+      <div class="section-head">
+        <div>
+          <div class="page-title"><i class="fa fa-list-check"></i>每日计划</div>
+          <div class="page-sub">今日任务卡片，点击打卡记录完成情况</div>
+        </div>
+        <button class="btn btn-primary" onclick="Plan.addCard()"><i class="fa fa-plus"></i>添加计划卡</button>
+      </div>
+      <div class="grid grid-3" id="planGrid"></div>
+    </section>
+
+    <!-- 2. 学习情况 -->
+    <section class="page" id="page-study">
+      <div class="page-title"><i class="fa fa-book"></i>学习情况</div>
+      <div class="page-sub">五科学习记录与复习进度，向2027高考冲刺</div>
+
+      <div class="countdown-box section">
+        <div class="cd-lbl">距 2027 年高考倒计时</div>
+        <div class="cd-num" id="cdNum">0</div>
+        <div class="cd-unit">天</div>
+      </div>
+
+      <div class="quote-card section" id="studyQuoteCard">
+        <span class="q-mark">"</span>
+        <div class="q-text" id="studyQuoteText">加载中...</div>
+        <div class="q-foot">
+          <button class="btn btn-soft btn-sm" onclick="Quote.refresh('study')"><i class="fa fa-refresh"></i>换一句</button>
+        </div>
+      </div>
+
+      <div class="grid grid-5" id="studyGrid"></div>
+
+      <div class="section" style="margin-top:26px;text-align:center;">
+        <button class="btn btn-primary" onclick="Study.showAllVideos()"><i class="fa fa-music"></i>爬取抖音 · 全科教学视频</button>
+        <div class="video-list" id="allVideosBox" style="display:none;margin-top:16px;text-align:left;"></div>
+      </div>
+    </section>
+
+    <!-- 3. 减肥计划 -->
+    <section class="page" id="page-slim">
+      <div class="page-title"><i class="fa fa-tachometer"></i>减肥计划</div>
+      <div class="page-sub">健康减重，坚持每日打卡</div>
+
+      <div class="quote-card section" id="slimQuoteCard">
+        <span class="q-mark">"</span>
+        <div class="q-text" id="slimQuoteText">加载中...</div>
+        <div class="q-foot">
+          <button class="btn btn-soft btn-sm" onclick="Quote.refresh('slim')"><i class="fa fa-refresh"></i>换一句</button>
+        </div>
+      </div>
+
+      <div class="card section">
+        <div class="section-head"><h3><i class="fa fa-balance-scale"></i>体重设定</h3></div>
+        <div class="weight-row">
+          <div class="field"><label>当前体重 (kg)</label><input type="number" class="inp" id="curWeight" step="0.1" placeholder="如 60.5"></div>
+          <div class="field"><label>目标体重 (kg)</label><input type="number" class="inp" id="goalWeight" step="0.1" placeholder="如 55"></div>
+          <div class="field" style="display:flex;align-items:flex-end;"><button class="btn btn-primary" onclick="Slim.saveWeight()"><i class="fa fa-floppy-o"></i>保存目标</button></div>
+        </div>
+      </div>
+
+      <div class="card section">
+        <div class="section-head"><h3><i class="fa fa-check-circle"></i>每日打卡</h3></div>
+        <div class="check-grid" id="slimChecks"></div>
+      </div>
+
+      <div class="card section">
+        <div class="section-head"><h3><i class="fa fa-cutlery"></i>饮食与运动记录</h3></div>
+        <div class="add-row">
+          <input type="text" class="inp" id="dietInput" placeholder="饮食内容，如‘早餐：燕麦+鸡蛋’">
+          <input type="text" class="inp" id="exerciseInput" placeholder="运动内容，如‘跑步30分钟’">
+          <button class="btn btn-primary" onclick="Slim.addLog()"><i class="fa fa-plus"></i>记录</button>
+        </div>
+        <div class="log-list" id="slimLogList"></div>
+        <div style="margin-top:10px;text-align:center;">
+          <button class="btn btn-ghost btn-sm" id="toggleAllLogs" onclick="Slim.toggleAllLogs()">查看全部</button>
+        </div>
+      </div>
+
+      <div class="card section">
+        <div class="section-head">
+          <h3><i class="fa fa-line-chart"></i>体重变化趋势</h3>
+          <div class="range-tabs" id="weightRange">
+            <button class="btn btn-soft btn-sm" data-range="7">7天</button>
+            <button class="btn btn-soft btn-sm" data-range="30">30天</button>
+            <button class="btn btn-soft btn-sm" data-range="all">全部</button>
+          </div>
+        </div>
+        <div class="chart-box" id="weightChart"></div>
+      </div>
+
+      <div class="card section">
+        <div class="section-head"><h3><i class="fa fa-magic"></i>AI 建议</h3></div>
+        <div class="ai-box" id="aiAdvice">暂无建议，请先记录几天的饮食运动数据。</div>
+      </div>
+    </section>
+
+    <!-- 4. 俄语学习 -->
+    <section class="page" id="page-russian">
+      <div class="page-title"><i class="fa fa-language"></i>俄语学习</div>
+      <div class="page-sub">今日俄语学习记录</div>
+
+      <div class="card section" style="text-align:center;background:var(--grad-soft);">
+        <div style="font-size:13px;color:var(--text-light);">今日俄语总时长</div>
+        <div style="font-size:40px;font-weight:800;color:var(--purple-3);" id="russianTotal">0 分钟</div>
+      </div>
+
+      <div class="card section">
+        <div class="section-head"><h3><i class="fa fa-list"></i>学习条目</h3></div>
+        <div class="add-row">
+          <input type="text" class="inp" id="russianInput" placeholder="学习内容，如‘背单词’、‘作文’、‘口语’">
+          <input type="number" class="inp inp-num" id="russianMin" value="30" step="5" min="5">
+          <button class="btn btn-primary" onclick="Russian.add()"><i class="fa fa-plus"></i>添加</button>
+        </div>
+        <div class="record-list" id="russianList"></div>
+      </div>
+
+      <div class="section" style="text-align:center;">
+        <button class="btn btn-primary" onclick="Russian.showVideos()"><i class="fa fa-music"></i>爬取抖音 · 俄语学习技巧</button>
+        <div class="video-list" id="russianVideos" style="display:none;margin-top:16px;text-align:left;"></div>
+      </div>
+    </section>
+
+    <!-- 5. 备忘录 -->
+    <section class="page" id="page-memo">
+      <div class="page-title"><i class="fa fa-sticky-note"></i>备忘录</div>
+      <div class="page-sub">随手记录，不错过任何想法</div>
+      <div class="card section">
+        <div class="add-row">
+          <input type="text" class="inp" id="memoInput" placeholder="输入备忘内容..." onkeydown="if(event.key==='Enter')Memo.add()">
+          <button class="btn btn-primary" onclick="Memo.add()"><i class="fa fa-plus"></i>添加</button>
+        </div>
+      </div>
+      <div class="record-list" id="memoList"></div>
+    </section>
+
+    <!-- 6. 历史回顾 -->
+    <section class="page" id="page-history">
+      <div class="page-title"><i class="fa fa-history"></i>历史回顾</div>
+      <div class="page-sub">聚合看板，回顾你的坚持轨迹</div>
+
+      <div class="card section">
+        <div class="section-head">
+          <h3><i class="fa fa-bar-chart"></i>学习总览</h3>
+          <div class="range-tabs" id="histStudyRange">
+            <button class="btn btn-soft btn-sm" data-range="7">7天</button>
+            <button class="btn btn-soft btn-sm" data-range="30">30天</button>
+          </div>
+        </div>
+        <div class="chart-box" id="histStudyChart"></div>
+        <div class="detail-box" id="histStudyDetail"></div>
+      </div>
+
+      <div class="card section">
+        <div class="section-head"><h3><i class="fa fa-language"></i>俄语学习回顾</h3></div>
+        <div class="chart-box" id="histRussianChart"></div>
+        <div class="detail-box" id="histRussianDetail"></div>
+      </div>
+
+      <div class="card section">
+        <div class="section-head"><h3><i class="fa fa-line-chart"></i>体重趋势</h3></div>
+        <div class="chart-box" id="histWeightChart"></div>
+      </div>
+
+      <div class="card section">
+        <div class="section-head"><h3><i class="fa fa-calendar"></i>打卡日历</h3>
+          <div id="calMonthLabel" style="font-size:14px;font-weight:600;color:var(--purple-3);"></div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px;">
+          <button class="btn btn-ghost btn-sm" onclick="Cal.prev()"><i class="fa fa-chevron-left"></i></button>
+          <button class="btn btn-ghost btn-sm" onclick="Cal.next()"><i class="fa fa-chevron-right"></i></button>
+          <button class="btn btn-soft btn-sm" onclick="Cal.goToday()">今天</button>
+        </div>
+        <div class="cal-week"><div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div></div>
+        <div class="cal-grid" id="calGrid"></div>
+        <div class="detail-box" id="calDetail"></div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- 自定义模态框 -->
+<div class="modal-mask" id="modal">
+  <div class="modal-box">
+    <div class="modal-title" id="modalTitle">提示</div>
+    <div class="modal-input" id="modalInputWrap" style="display:none;">
+      <input type="text" class="inp" id="modalInput" placeholder="">
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost btn-sm" id="modalCancel">取消</button>
+      <button class="btn btn-primary btn-sm" id="modalOk">确定</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   泠的计划 · 个人工作台  主脚本
+   所有数据存储于 localStorage 键名 workbuddy_data
+   数据按日期组织，确保历史可追溯
+============================================================ */
+
+/* ---------- 数据层 ---------- */
+const STORE_KEY='workbuddy_data';
+const defaultData={
+  planCards:['学习情况','减肥计划','俄语学习'],   // 计划卡名称列表
+  planCheck:{},        // {date:{cardName:true}} 打卡
+  studyRecords:{},     // {date:{科目:[{content,minutes}]}}
+  studyProgress:{},    // {科目:百分比}
+  russianRecords:{},   // {date:[{content,minutes}]}
+  weightLog:[],        // [{date,weight}]
+  weightGoal:null,     // 目标体重
+  weightInit:null,     // 初始体重（首次保存时锁定）
+  slimChecks:{},       // {date:{water,sleep,aerobic}}
+  slimLogs:[],         // [{date,time,text}]
+  memos:[],            // [{id,content,ts}]
+  quoteStudy:{},       // {date:index} 学习页励志句
+  quoteSlim:{},        // {date:index} 减肥页励志句
+};
+let DB=loadDB();
+function loadDB(){
+  try{const raw=localStorage.getItem(STORE_KEY);if(raw)return Object.assign({},defaultData,JSON.parse(raw));}catch(e){}
+  return JSON.parse(JSON.stringify(defaultData));
+}
+function saveDB(){localStorage.setItem(STORE_KEY,JSON.stringify(DB));}
+function todayKey(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function dateKey(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+
+/* ---------- 励志句库（≥30句） ---------- */
+const QUOTES=[
+  "今日不肯埋头，明日何以抬头。",
+  "学习很苦，坚持很酷。",
+  "你背单词时，阿拉斯加的鳕鱼正跃出水面。",
+  "乾坤未定，你我皆是黑马。",
+  "半山腰太挤了，要去山顶看看。",
+  "星光不问赶路人，时光不负有心人。",
+  "将来的你，一定会感谢现在拼命的自己。",
+  "不要等到明天，明天太遥远，今天就行动。",
+  "所有的努力都不会完全白费，你付出的每一点都有意义。",
+  "你只管努力，剩下的交给时间。",
+  "没有人能替你撑伞，你得自己成为屋檐。",
+  "日日行，不怕千万里；常常做，不怕千万事。",
+  "努力到无能为力，拼搏到感动自己。",
+  "你现在的态度，决定你十年后的高度。",
+  "与其在叹息中老去，不如在奋斗中燃烧。",
+  "每一个不曾起舞的日子，都是对生命的辜负。",
+  "别在最能吃苦的年纪，选择了安逸。",
+  "想要无可取代，就必须与众不同。",
+  "走得最慢的人，只要不丧失目标，也比漫无目的徘徊的人走得快。",
+  "你必须非常努力，才能看起来毫不费力。",
+  "今日事，今日毕。你的日积月累，终会变成别人的望尘莫及。",
+  "没有人能随随便便成功，它来自彻底的自我管理和毅力。",
+  "吃得苦中苦，方为人上人。",
+  "比你优秀的人比你还努力，你有什么理由不拼搏。",
+  "学习如逆水行舟，不进则退。",
+  "不要质疑你的付出，这些都会一种累积一种沉淀。",
+  "默默努力，惊艳所有人。",
+  "你背不下来的书，总有人能背下来；你做不出的题，总有人能做出来。",
+  "愿你以渺小启程，以伟大结束。",
+  "生命不止，奋斗不息。",
+  "种一棵树最好的时间是十年前，其次是现在。",
+  "自律给我自由，坚持给我力量。",
+  "身材管理，是一场和自己的持久战。",
+  "汗水是脂肪的眼泪，今天的苦是明天的甜。",
+  "管住嘴，迈开腿，明天你是李宣美。"
+];
+
+/* ---------- 工具函数 ---------- */
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2200);}
+let modalCallback=null;
+function showModal({title,body,input,placeholder,okText,onOk}){
+  document.getElementById('modalTitle').textContent=title||'提示';
+  document.getElementById('modalBody').innerHTML=body||'';
+  const wrap=document.getElementById('modalInputWrap');
+  const inp=document.getElementById('modalInput');
+  if(input){wrap.style.display='block';inp.placeholder=placeholder||'';inp.value='';setTimeout(()=>inp.focus(),100);}else{wrap.style.display='none';}
+  document.getElementById('modalOk').textContent=okText||'确定';
+  modalCallback=onOk||null;
+  document.getElementById('modal').classList.add('show');
+  if(input){
+    inp.onkeydown=e=>{if(e.key==='Enter'){confirmModal();}};
+  }
+}
+function confirmModal(){
+  const wrap=document.getElementById('modalInputWrap');
+  let val=null;
+  if(wrap.style.display!=='none'){val=document.getElementById('modalInput').value.trim();}
+  if(modalCallback){if(val!==null){if(val)modalCallback(val);else return;}else modalCallback();}
+  closeModal();
+}
+function closeModal(){document.getElementById('modal').classList.remove('show');modalCallback=null;}
+document.getElementById('modalOk').onclick=confirmModal;
+document.getElementById('modalCancel').onclick=closeModal;
+document.getElementById('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal();});
+
+/* 模拟抖音视频数据 */
+const VIDEO_DATA={
+  '语文':[{t:'高中语文作文高分技巧：开头结尾套路',a:'语文老师小王',p:'12.3w'},{t:'文言文实词虚词一本通',a:'李老师讲语文',p:'8.7w'},{t:'现代文阅读答题模板总结',a:'学霸君',p:'15.1w'},{t:'古诗词鉴赏万能公式',a:'语文提分君',p:'9.4w'},{t:'高考语文130+复习规划',a:'状元笔记',p:'20.6w'}],
+  '数学':[{t:'高中数学导数压轴题攻克指南',a:'数学老张',p:'18.2w'},{t:'圆锥曲线秒杀技巧合集',a:'高考数学帮',p:'11.5w'},{t:'数列求和七种方法',a:'阿甘数学',p:'7.3w'},{t:'立体几何建系与向量法',a:'数学提分',p:'9.8w'},{t:'函数与方程思想精讲',a:'学霸数学',p:'13.4w'}],
+  '历史':[{t:'中国近代史时间轴一张图搞定',a:'历史君',p:'14.7w'},{t:'世界史大事件串讲',a:'王老师讲历史',p:'8.9w'},{t:'历史材料题答题套路',a:'高考历史通',p:'10.2w'},{t:'中国古代政治制度演变',a:'历史提分',p:'6.5w'},{t:'历史选择题排除法技巧',a:'学霸笔记',p:'12.1w'}],
+  '政治':[{t:'政治主观题答题模板四步法',a:'政治老师陈',p:'11.3w'},{t:'经济生活核心考点串讲',a:'高考政治',p:'9.7w'},{t:'哲学生活原理与方法论对照',a:'政治提分君',p:'13.8w'},{t:'政治生活主体分析法',a:'学霸政治',p:'7.4w'},{t:'时事热点与课本结合技巧',a:'政治冲刺',p:'10.9w'}],
+  '地理':[{t:'高中地理气候类型一图通',a:'地理老师林',p:'15.6w'},{t:'区域地理分析方法',a:'高考地理帮',p:'8.2w'},{t:'地理主观题答题模板',a:'地理提分',p:'11.7w'},{t:'洋流与气候关联精讲',a:'学霸地理',p:'9.1w'},{t:'地理选择题图表判读技巧',a:'地理状元',p:'12.8w'}],
+  '俄语':[{t:'俄语字母表发音零基础入门',a:'俄语小课堂',p:'6.8w'},{t:'俄语变格口诀记忆法',a:'安娜老师',p:'9.3w'},{t:'俄语日常对话100句',a:'俄语学习君',p:'12.5w'},{t:'俄语动词体精讲',a:'俄语提分',p:'7.7w'},{t:'高考俄语听力技巧',a:'俄语状元',p:'8.1w'}]
+};
+function renderVideos(list){
+  return list.map(v=>`<div class="video-item"><div class="vi-icon"><i class="fa fa-play"></i></div><div><div class="vi-title">${v.t}</div><div class="vi-meta">@${v.a} · ${v.p}点赞</div></div></div>`).join('');
+}
+
+/* ---------- 导航切换 ---------- */
+const pageRenderMap={plan:Plan_render,study:Study_render,slim:Slim_render,russian:Russian_render,memo:Memo_render,history:History_render};
+function switchPage(name){
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.dataset.page===name));
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  const el=document.getElementById('page-'+name);
+  el.classList.add('active');
+  // 重新触发动画
+  el.style.animation='none';void el.offsetWidth;el.style.animation='';
+  // 渲染对应页面 + 图表
+  setTimeout(()=>{
+    if(pageRenderMap[name])pageRenderMap[name]();
+    if(name==='slim')Slim_renderCharts();
+    if(name==='history')History_renderCharts();
+    renderTopbar();
+  },30);
+  // 移动端关闭抽屉
+  closeDrawer();
+}
+document.getElementById('navList').addEventListener('click',e=>{
+  const item=e.target.closest('.nav-item');if(item)switchPage(item.dataset.page);
+});
+function openDrawer(){document.getElementById('sidebar').classList.add('open');document.getElementById('scrim').classList.add('show');}
+function closeDrawer(){document.getElementById('sidebar').classList.remove('open');document.getElementById('scrim').classList.remove('show');}
+document.getElementById('hamburger').onclick=openDrawer;
+document.getElementById('scrim').onclick=closeDrawer;
+
+/* ---------- 顶部总览条 ---------- */
+function renderTopbar(){
+  const now=new Date();
+  const h=now.getHours();
+  let g='夜深了，泠';if(h<11)g='早上好，泠';else if(h<14)g='中午好，泠';else if(h<18)g='下午好，泠';else if(h<22)g='晚上好，泠';
+  document.getElementById('greeting').textContent=g;
+  const wk=['日','一','二','三','四','五','六'];
+  document.getElementById('topDate').textContent=`${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日 星期${wk[now.getDay()]}`;
+  // 今日完成
+  const tk=todayKey();
+  const planDone=(DB.planCheck[tk])?Object.keys(DB.planCheck[tk]).filter(k=>DB.planCheck[tk][k]).length:0;
+  const sc=(DB.slimChecks[tk])?Object.values(DB.slimChecks[tk]).filter(Boolean).length:0;
+  const totalPlan=DB.planCards.length+3;
+  document.getElementById('statDone').textContent=`${planDone+sc}/${totalPlan}`;
+  // 学习总时长
+  let studyMin=0;
+  if(DB.studyRecords[tk]){Object.values(DB.studyRecords[tk]).forEach(arr=>arr.forEach(r=>studyMin+=+r.minutes||0));}
+  if(DB.russianRecords[tk]){DB.russianRecords[tk].forEach(r=>studyMin+=+r.minutes||0);}
+  document.getElementById('statStudy').textContent=(studyMin/60).toFixed(1)+'h';
+  // 已减重量
+  const init=DB.weightInit,cur=DB.weightLog.length?DB.weightLog[DB.weightLog.length-1].weight:null;
+  let lost=0;
+  if(init&&cur){lost=(init-cur).toFixed(1);if(lost<0)lost='0.0';}
+  document.getElementById('statWeight').textContent=lost;
+}
+
+/* ============================================================
+   模块：每日计划
+============================================================ */
+const Plan={
+  addCard(){
+    showModal({title:'添加计划卡',body:'请输入新计划卡的名称：',input:true,placeholder:'如：阅读30分钟',okText:'添加',onOk:name=>{
+      if(DB.planCards.includes(name)){toast('该卡片已存在');return;}
+      DB.planCards.push(name);saveDB();Plan_render();renderTopbar();toast('已添加');
+    }});
+  },
+  toggle(name){
+    const tk=todayKey();
+    if(!DB.planCheck[tk])DB.planCheck[tk]={};
+    DB.planCheck[tk][name]=!DB.planCheck[tk][name];
+    saveDB();Plan_render();renderTopbar();
+  },
+  del(name){
+    showModal({title:'删除确认',body:`确定要删除计划卡「${name}」吗？<br><span style="color:#ef4444;">此操作不可恢复。</span>`,okText:'删除',onOk:()=>{
+      DB.planCards=DB.planCards.filter(c=>c!==name);
+      Object.keys(DB.planCheck).forEach(d=>{if(DB.planCheck[d][name])delete DB.planCheck[d][name];});
+      saveDB();Plan_render();renderTopbar();toast('已删除');
+    }});
+  }
+};
+function Plan_render(){
+  const tk=todayKey();
+  const grid=document.getElementById('planGrid');
+  grid.innerHTML=DB.planCards.map((name,i)=>{
+    const checked=DB.planCheck[tk]&&DB.planCheck[tk][name];
+    let summary='';
+    if(name==='学习情况'){
+      let m=0;if(DB.studyRecords[tk])Object.values(DB.studyRecords[tk]).forEach(a=>a.forEach(r=>m+=+r.minutes||0));summary=`今日学习 ${m} 分钟`;
+    }else if(name==='减肥计划'){
+      const c=DB.weightLog.length?DB.weightLog[DB.weightLog.length-1].weight:'—';summary=`当前体重 ${c} kg`;
+    }else if(name==='俄语学习'){
+      let m=0;if(DB.russianRecords[tk])DB.russianRecords[tk].forEach(r=>m+=+r.minutes||0);summary=`今日俄语 ${m} 分钟`;
+    }else{summary='点击打卡记录完成';}
+    const icon=['book','tachometer','language','star','heart','flag','coffee'][i%7];
+    return `<div class="card plan-card">
+      ${checked?'<span class="badge-done">已打卡</span>':''}
+      <div class="pc-head">
+        <div class="pc-title"><i class="fa fa-${icon}"></i>${name}</div>
+        <button class="del-x" onclick="Plan.del('${name}')"><i class="fa fa-times"></i></button>
+      </div>
+      <div class="pc-body">${summary}</div>
+      <div class="pc-foot">
+        <button class="btn btn-sm ${checked?'btn-checked':'btn-check'}" onclick="Plan.toggle('${name}')">
+          <i class="fa fa-${checked?'check':'circle-o'}"></i>${checked?'已打卡':'打卡'}
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ============================================================
+   模块：励志句（学习/减肥各自独立）
+============================================================ */
+const Quote={
+  get(page){ // page: 'study' | 'slim'
+    const tk=todayKey();
+    const store=page==='study'?DB.quoteStudy:DB.quoteSlim;
+    if(store[tk]!==undefined)return QUOTES[store[tk]];
+    // 当天首次：按日期索引选取
+    const seed=new Date().getDate()+new Date().getMonth();
+    const idx=seed%QUOTES.length;
+    store[tk]=idx;saveDB();
+    return QUOTES[idx];
+  },
+  refresh(page){
+    const tk=todayKey();
+    const store=page==='study'?DB.quoteStudy:DB.quoteSlim;
+    let cur=store[tk]!==undefined?store[tk]:0;
+    let next=cur;
+    if(QUOTES.length>1){while(next===cur)next=Math.floor(Math.random()*QUOTES.length);}
+    store[tk]=next;saveDB();
+    document.getElementById(page==='study'?'studyQuoteText':'slimQuoteText').textContent=QUOTES[next];
+  }
+};
+
+/* ============================================================
+   模块：学习情况
+============================================================ */
+const SUBJECTS=[{name:'语文',emoji:'📖'},{name:'数学',emoji:'📐'},{name:'历史',emoji:'📜'},{name:'政治',emoji:'🏛️'},{name:'地理',emoji:'🌍'}];
+const Study={
+  add(name){
+    const content=document.getElementById(`studyInput_${name}`).value.trim();
+    const minutes=+document.getElementById(`studyMin_${name}`).value;
+    if(!content){toast('请输入学习内容');return;}
+    if(!minutes||minutes<=0){toast('请输入有效分钟数');return;}
+    const tk=todayKey();
+    if(!DB.studyRecords[tk])DB.studyRecords[tk]={};
+    if(!DB.studyRecords[tk][name])DB.studyRecords[tk][name]=[];
+    DB.studyRecords[tk][name].push({content,minutes});
+    saveDB();Study_render();renderTopbar();toast('已添加');
+  },
+  del(name,idx){
+    showModal({title:'删除确认',body:'确定删除这条学习记录吗？',okText:'删除',onOk:()=>{
+      const tk=todayKey();
+      if(DB.studyRecords[tk]&&DB.studyRecords[tk][name])DB.studyRecords[tk][name].splice(idx,1);
+      saveDB();Study_render();renderTopbar();toast('已删除');
+    }});
+  },
+  setProgress(name,val){
+    DB.studyProgress[name]=+val;saveDB();
+  },
+  toggleVideos(name){
+    const box=document.getElementById(`videos_${name}`);
+    if(box.style.display==='none'){box.innerHTML=renderVideos(VIDEO_DATA[name]);box.style.display='block';}
+    else box.style.display='none';
+  },
+  showAllVideos(){
+    const box=document.getElementById('allVideosBox');
+    let html='';
+    SUBJECTS.forEach(s=>{html+=`<div style="font-weight:700;margin:10px 0 4px;color:var(--purple-3);">${s.emoji} ${s.name}</div>`+renderVideos(VIDEO_DATA[s.name]);});
+    box.innerHTML=html;box.style.display='block';toast('已加载全科视频');
+  }
+};
+function Study_render(){
+  // 倒计时
+  const target=new Date('2027-06-07');
+  const now=new Date();
+  const days=Math.ceil((target-now)/(1000*60*60*24));
+  document.getElementById('cdNum').textContent=days>0?days:0;
+  // 励志句
+  document.getElementById('studyQuoteText').textContent=Quote.get('study');
+  // 五科卡片
+  const tk=todayKey();
+  const grid=document.getElementById('studyGrid');
+  grid.innerHTML=SUBJECTS.map(s=>{
+    const records=(DB.studyRecords[tk]&&DB.studyRecords[tk][s.name])||[];
+    const total=records.reduce((a,r)=>a+(+r.minutes||0),0);
+    const prog=DB.studyProgress[s.name]||0;
+    return `<div class="card">
+      <div class="subj-head">
+        <div class="subj-name"><span class="subj-emoji">${s.emoji}</span>${s.name}</div>
+        <div class="subj-total">${total}分钟</div>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-head"><span>复习进度</span><span>${prog}%</span></div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${prog}%"></div></div>
+        <input type="range" min="0" max="100" value="${prog}" oninput="Study.setProgress('${s.name}',this.value);Study_render()" style="margin-top:6px;">
+      </div>
+      <div class="record-list">
+        ${records.map((r,i)=>`<div class="record-item"><span class="ri-content">${r.content}</span><span class="ri-min">${r.minutes}分</span><button class="del-x" onclick="Study.del('${s.name}',${i})"><i class="fa fa-times"></i></button></div>`).join('')||'<div style="font-size:12px;color:var(--text-light);padding:6px 0;">暂无记录</div>'}
+      </div>
+      <div class="add-row">
+        <input type="text" class="inp" id="studyInput_${s.name}" placeholder="学习内容，如‘作文’、‘集合’">
+        <input type="number" class="inp inp-num" id="studyMin_${s.name}" value="30" step="5" min="5">
+        <button class="btn btn-primary btn-sm" onclick="Study.add('${s.name}')"><i class="fa fa-plus"></i>添加</button>
+      </div>
+      <div style="margin-top:8px;">
+        <button class="btn btn-ghost btn-sm" onclick="Study.toggleVideos('${s.name}')"><i class="fa fa-music"></i>抖音资源</button>
+        <div class="video-list" id="videos_${s.name}" style="display:none;"></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ============================================================
+   模块：减肥计划
+============================================================ */
+const SlimChecks=[{key:'water',label:'喝水2L',icon:'tint'},{key:'sleep',label:'早睡',icon:'moon-o'},{key:'aerobic',label:'有氧运动',icon:'bicycle'}];
+let slimChart=null,weightRange='7';
+const Slim={
+  saveWeight(){
+    const cur=+document.getElementById('curWeight').value;
+    const goal=+document.getElementById('goalWeight').value;
+    if(!cur||cur<=0){toast('请输入有效当前体重');return;}
+    const tk=todayKey();
+    // 更新或添加当天体重记录
+    const exist=DB.weightLog.find(w=>w.date===tk);
+    if(exist)exist.weight=cur;else DB.weightLog.push({date:tk,weight:cur});
+    DB.weightLog.sort((a,b)=>a.date<b.date?-1:1);
+    // 锁定初始体重
+    if(!DB.weightInit)DB.weightInit=DB.weightLog[0].weight;
+    if(goal)DB.weightGoal=goal;
+    saveDB();Slim_render();renderTopbar();Slim_renderCharts();toast('已保存');
+  },
+  toggleCheck(key){
+    const tk=todayKey();
+    if(!DB.slimChecks[tk])DB.slimChecks[tk]={};
+    DB.slimChecks[tk][key]=!DB.slimChecks[tk][key];
+    saveDB();Slim_render();renderTopbar();
+  },
+  addLog(){
+    const diet=document.getElementById('dietInput').value.trim();
+    const ex=document.getElementById('exerciseInput').value.trim();
+    if(!diet&&!ex){toast('请输入饮食或运动内容');return;}
+    const now=new Date();
+    const text=[];
+    if(diet)text.push('🍽 '+diet);
+    if(ex)text.push('🏃 '+ex);
+    DB.slimLogs.push({date:todayKey(),time:`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`,text:text.join(' ')});
+    saveDB();document.getElementById('dietInput').value='';document.getElementById('exerciseInput').value='';Slim_renderLogs();Slim.renderAI();toast('已记录');
+  },
+  showAll:false,
+  toggleAllLogs(){
+    Slim.showAll=!Slim.showAll;Slim_renderLogs();
+    document.getElementById('toggleAllLogs').textContent=Slim.showAll?'收起':'查看全部';
+  },
+  renderAI(){
+    // 取最近3天饮食运动记录给建议
+    const recent=DB.slimLogs.slice(-15).filter(l=>{
+      const d=new Date(l.date);const diff=(Date.now()-d)/86400000;return diff<=3;
+    });
+    const box=document.getElementById('aiAdvice');
+    if(!recent.length){box.textContent='暂无建议，请先记录几天的饮食运动数据。';return;}
+    let tips=[];
+    const hasEx=recent.some(l=>l.text.includes('🏃'));
+    const hasDiet=recent.some(l=>l.text.includes('🍽'));
+    if(!hasEx)tips.push('🏃 近3天缺少运动记录，建议每天进行至少30分钟有氧运动。');
+    else tips.push('🏃 运动坚持得不错，继续保持规律锻炼。');
+    if(!hasDiet)tips.push('🍽 建议记录每日饮食，便于发现热量超标。');
+    else tips.push('🍽 已有饮食记录，注意控制高糖高油食物摄入。');
+    // 体重趋势
+    if(DB.weightLog.length>=2){
+      const diff=DB.weightLog[DB.weightLog.length-1].weight-DB.weightLog[0].weight;
+      if(diff<0)tips.push(`📉 体重已下降 ${Math.abs(diff).toFixed(1)} kg，减重进展顺利，注意补充蛋白质防止肌肉流失。`);
+      else if(diff>0)tips.push(`📈 体重上升了 ${diff.toFixed(1)} kg，建议适当减少碳水摄入并增加运动量。`);
+      else tips.push('➡️ 体重保持稳定，可尝试调整饮食结构突破平台期。');
+    }
+    if(DB.slimChecks[todayKey()]&&DB.slimChecks[todayKey()].water)tips.push('💧 今日喝水打卡已完成，保持水分摄入有助于代谢。');
+    else tips.push('💧 今日喝水2L尚未完成，记得多喝水哦。');
+    box.innerHTML=tips.map(t=>`<div>${t}</div>`).join('');
+  }
+};
+function Slim_render(){
+  // 励志句
+  document.getElementById('slimQuoteText').textContent=Quote.get('slim');
+  // 体重输入回填
+  const lastW=DB.weightLog.length?DB.weightLog[DB.weightLog.length-1].weight:'';
+  document.getElementById('curWeight').value=lastW||'';
+  document.getElementById('goalWeight').value=DB.weightGoal||'';
+  // 打卡
+  const tk=todayKey();
+  const sc=DB.slimChecks[tk]||{};
+  document.getElementById('slimChecks').innerHTML=SlimChecks.map(c=>`
+    <div class="check-item ${sc[c.key]?'checked':''}" onclick="Slim.toggleCheck('${c.key}')">
+      <div class="ci-box"><i class="fa fa-check"></i></div>
+      <i class="fa fa-${c.icon}" style="color:var(--purple-3);width:20px;text-align:center;"></i>
+      <span class="ci-text">${c.label}</span>
+    </div>`).join('');
+  Slim_renderLogs();Slim.renderAI();
+}
+function Slim_renderLogs(){
+  const list=document.getElementById('slimLogList');
+  let logs=DB.slimLogs.slice().reverse();
+  if(!Slim.showAll)logs=logs.slice(0,5);
+  list.innerHTML=logs.map(l=>`<div class="log-item"><span>${l.text}</span><span class="log-time">${l.date} ${l.time}</span></div>`).join('')||'<div style="font-size:12px;color:var(--text-light);padding:6px 0;">暂无记录</div>';
+}
+function Slim_renderCharts(){
+  const el=document.getElementById('weightChart');if(!el)return;
+  const rect=el.getBoundingClientRect();if(rect.width<10||rect.height<10)return;
+  if(!slimChart)slimChart=echarts.init(el);
+  let data=DB.weightLog.slice();
+  // 筛选范围
+  if(weightRange!=='all'){
+    const n=+weightRange;
+    data=data.slice(-n);
+  }
+  // 补全缺失日期（用前值填充，便于看趋势）
+  if(data.length){
+    const filled=[];
+    let start=new Date(data[0].date),end=new Date(data[data.length-1].date);
+    let idx=0;
+    for(let d=new Date(start);d<=end;d.setDate(d.getDate()+1)){
+      const dk=dateKey(d);
+      if(data[idx]&&data[idx].date===dk){filled.push([dk,data[idx].weight]);idx++;}
+      else if(filled.length){filled.push([dk,filled[filled.length-1][1]]);}
+    }
+    data=filled;
+  }
+  slimChart.setOption({
+    tooltip:{trigger:'axis'},
+    grid:{left:40,right:20,top:30,bottom:40},
+    xAxis:{type:'category',data:data.map(d=>d[0]),axisLabel:{rotate:30}},
+    yAxis:{type:'value',name:'kg',scale:true},
+    series:[{name:'体重',type:'line',smooth:true,data:data.map(d=>d[1]),itemStyle:{color:'#ec4899'},lineStyle:{width:3},areaStyle:{color:{type:'linear',x:0,y:0,x2:0,y2:1,colorStops:[{offset:0,color:'rgba(236,72,153,.3)'},{offset:1,color:'rgba(236,72,153,0)'}]}}}]
+  });
+  setTimeout(()=>slimChart&&slimChart.resize(),50);
+}
+document.getElementById('weightRange').addEventListener('click',e=>{
+  const b=e.target.closest('[data-range]');if(!b)return;
+  weightRange=b.dataset.range;
+  document.querySelectorAll('#weightRange .btn').forEach(x=>x.classList.remove('btn-primary'));
+  b.classList.add('btn-primary');
+  Slim_renderCharts();
+});
+
+/* ============================================================
+   模块：俄语学习
+============================================================ */
+const Russian={
+  add(){
+    const content=document.getElementById('russianInput').value.trim();
+    const minutes=+document.getElementById('russianMin').value;
+    if(!content){toast('请输入学习内容');return;}
+    if(!minutes||minutes<=0){toast('请输入有效分钟数');return;}
+    const tk=todayKey();
+    if(!DB.russianRecords[tk])DB.russianRecords[tk]=[];
+    DB.russianRecords[tk].push({content,minutes});
+    saveDB();Russian_render();renderTopbar();toast('已添加');
+  },
+  del(idx){
+    showModal({title:'删除确认',body:'确定删除这条俄语学习记录吗？',okText:'删除',onOk:()=>{
+      const tk=todayKey();
+      if(DB.russianRecords[tk])DB.russianRecords[tk].splice(idx,1);
+      saveDB();Russian_render();renderTopbar();toast('已删除');
+    }});
+  },
+  showVideos(){
+    const box=document.getElementById('russianVideos');
+    if(box.style.display==='none'){box.innerHTML=renderVideos(VIDEO_DATA['俄语']);box.style.display='block';toast('已加载俄语视频');}
+    else box.style.display='none';
+  }
+};
+function Russian_render(){
+  const tk=todayKey();
+  const records=DB.russianRecords[tk]||[];
+  const total=records.reduce((a,r)=>a+(+r.minutes||0),0);
+  document.getElementById('russianTotal').textContent=`${total} 分钟`;
+  document.getElementById('russianList').innerHTML=records.map((r,i)=>`<div class="record-item"><span class="ri-content">${r.content}</span><span class="ri-min">${r.minutes}分</span><button class="del-x" onclick="Russian.del(${i})"><i class="fa fa-times"></i></button></div>`).join('')||'<div style="font-size:12px;color:var(--text-light);padding:6px 0;">暂无记录</div>';
+}
+
+/* ============================================================
+   模块：备忘录
+============================================================ */
+const Memo={
+  add(){
+    const content=document.getElementById('memoInput').value.trim();
+    if(!content){toast('请输入内容');return;}
+    DB.memos.push({id:Date.now(),content,ts:new Date().toISOString()});
+    saveDB();document.getElementById('memoInput').value='';Memo_render();toast('已添加');
+  },
+  del(id){
+    showModal({title:'删除确认',body:'确定删除这条备忘吗？',okText:'删除',onOk:()=>{
+      DB.memos=DB.memos.filter(m=>m.id!==id);saveDB();Memo_render();toast('已删除');
+    }});
+  }
+};
+function Memo_render(){
+  const list=document.getElementById('memoList');
+  const memos=DB.memos.slice().reverse();
+  list.innerHTML=memos.map(m=>{
+    const d=new Date(m.ts);
+    return `<div class="memo-item"><div class="memo-content">${m.content.replace(/</g,'&lt;')}<div class="memo-time">${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}</div></div><button class="del-x" onclick="Memo.del(${m.id})"><i class="fa fa-times"></i></button></div>`;
+  }).join('')||'<div style="font-size:13px;color:var(--text-light);padding:10px;">暂无备忘</div>';
+}
+
+/* ============================================================
+   模块：历史回顾
+============================================================ */
+let histStudyRange='7';
+let histStudyChart=null,histRussianChart=null,histWeightChart2=null;
+const History={
+  studyDetailDate:null,
+  russianDetailDate:null
+};
+function History_render(){
+  // 不在此渲染图表，等容器可见后在 renderCharts 中渲染
+}
+function isVisible(el){
+  if(!el)return false;
+  const r=el.getBoundingClientRect();
+  return r.width>20&&r.height>20;
+}
+function History_renderCharts(){
+  // 学习总览柱状图
+  const el1=document.getElementById('histStudyChart');if(isVisible(el1)){
+    if(!histStudyChart)histStudyChart=echarts.init(el1);
+    const days=+histStudyRange;
+    const dates=[];for(let i=days-1;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);dates.push(dateKey(d));}
+    const series=SUBJECTS.map(s=>({
+      name:s.name,type:'bar',stack:'a',
+      data:dates.map(dk=>{const rec=(DB.studyRecords[dk]&&DB.studyRecords[dk][s.name])||[];return rec.reduce((a,r)=>a+(+r.minutes||0),0);}),
+      itemStyle:{borderRadius:[4,4,0,0]}
+    }));
+    histStudyChart.setOption({
+      tooltip:{trigger:'axis',axisPointer:{type:'shadow'}},
+      legend:{top:0,data:SUBJECTS.map(s=>s.name)},
+      grid:{left:40,right:20,top:40,bottom:50},
+      xAxis:{type:'category',data:dates.map(d=>d.slice(5)),axisLabel:{rotate:30}},
+      yAxis:{type:'value',name:'分钟'},
+      series:series
+    },true);
+    setTimeout(()=>histStudyChart&&histStudyChart.resize(),50);
+    // 点击事件
+    histStudyChart.off('click');
+    histStudyChart.on('click',p=>{
+      if(p.componentType==='series'){
+        const dateStr=dates[p.dataIndex];
+        History.showStudyDetail(dateStr);
+      }
+    });
+  }
+  // 俄语折线图
+  const el2=document.getElementById('histRussianChart');if(isVisible(el2)){
+    if(!histRussianChart)histRussianChart=echarts.init(el2);
+    const days=30;const dates=[];for(let i=days-1;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);dates.push(dateKey(d));}
+    const data=dates.map(dk=>{const rec=DB.russianRecords[dk]||[];return rec.reduce((a,r)=>a+(+r.minutes||0),0);});
+    histRussianChart.setOption({
+      tooltip:{trigger:'axis'},
+      grid:{left:40,right:20,top:30,bottom:50},
+      xAxis:{type:'category',data:dates.map(d=>d.slice(5)),axisLabel:{rotate:30}},
+      yAxis:{type:'value',name:'分钟'},
+      series:[{name:'俄语',type:'bar',data,smooth:true,itemStyle:{color:'#a78bfa'},lineStyle:{width:3}}]
+    },true);
+    setTimeout(()=>histRussianChart&&histRussianChart.resize(),50);
+    histRussianChart.off('click');
+    histRussianChart.on('click',p=>{if(p.componentType==='series'){History.showRussianDetail(dates[p.dataIndex]);}});
+  }
+  // 体重趋势
+  const el3=document.getElementById('histWeightChart');if(isVisible(el3)){
+    if(!histWeightChart2)histWeightChart2=echarts.init(el3);
+    const data=DB.weightLog.map(w=>[w.date,w.weight]);
+    histWeightChart2.setOption({
+      tooltip:{trigger:'axis'},grid:{left:40,right:20,top:20,bottom:40},
+      xAxis:{type:'category',data:data.map(d=>d[0]),axisLabel:{rotate:30}},
+      yAxis:{type:'value',name:'kg',scale:true},
+      series:[{type:'line',smooth:true,data:data.map(d=>d[1]),itemStyle:{color:'#ec4899'},lineStyle:{width:3}}]
+    },true);
+    setTimeout(()=>histWeightChart2&&histWeightChart2.resize(),50);
+  }
+  // 日历
+  Cal.render();
+}
+History.showStudyDetail=function(dateStr){
+  const box=document.getElementById('histStudyDetail');
+  let html=`<div style="font-weight:700;margin-bottom:6px;">${dateStr} 学习详情</div>`;
+  const rec=DB.studyRecords[dateStr]||{};
+  if(!Object.keys(rec).length){html+='<div>当日无学习记录</div>';}
+  else{SUBJECTS.forEach(s=>{if(rec[s.name]&&rec[s.name].length){const t=rec[s.name].reduce((a,r)=>a+(+r.minutes||0),0);html+=`<div style="margin:4px 0;"><b>${s.name}</b> (${t}分)：${rec[s.name].map(r=>`${r.content}(${r.minutes}分)`).join('、')}</div>`;}});}
+  box.innerHTML=html;box.classList.add('show');
+};
+History.showRussianDetail=function(dateStr){
+  const box=document.getElementById('histRussianDetail');
+  const rec=DB.russianRecords[dateStr]||[];
+  let html=`<div style="font-weight:700;margin-bottom:6px;">${dateStr} 俄语详情</div>`;
+  if(!rec.length)html+='<div>当日无俄语记录</div>';
+  else html+=rec.map(r=>`<div>${r.content}：${r.minutes}分钟</div>`).join('');
+  box.innerHTML=html;box.classList.add('show');
+};
+document.getElementById('histStudyRange').addEventListener('click',e=>{
+  const b=e.target.closest('[data-range]');if(!b)return;
+  histStudyRange=b.dataset.range;
+  document.querySelectorAll('#histStudyRange .btn').forEach(x=>x.classList.remove('btn-primary'));
+  b.classList.add('btn-primary');
+  History_renderCharts();
+});
+
+/* 打卡日历 */
+const Cal={
+  year:new Date().getFullYear(),
+  month:new Date().getMonth(),
+  render(){
+    const label=document.getElementById('calMonthLabel');
+    label.textContent=`${Cal.year}年${Cal.month+1}月`;
+    const grid=document.getElementById('calGrid');
+    const first=new Date(Cal.year,Cal.month,1);
+    const firstDay=first.getDay();
+    const daysInMonth=new Date(Cal.year,Cal.month+1,0).getDate();
+    const today=todayKey();
+    let html='';
+    for(let i=0;i<firstDay;i++)html+='<div class="cal-cell empty"></div>';
+    for(let d=1;d<=daysInMonth;d++){
+      const dk=`${Cal.year}-${String(Cal.month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const pc=DB.planCheck[dk]?Object.keys(DB.planCheck[dk]).filter(k=>DB.planCheck[dk][k]).length:0;
+      const sc=DB.slimChecks[dk]?Object.values(DB.slimChecks[dk]).filter(Boolean).length:0;
+      const total=pc+sc;
+      let cls='cal-cell';
+      if(dk===today)cls+=' today';
+      if(total>0)cls+= total>=3?' has-data':' has-data some';
+      html+=`<div class="${cls}" onclick="Cal.showDetail('${dk}')">${d}</div>`;
+    }
+    grid.innerHTML=html;
+  },
+  showDetail(dk){
+    const box=document.getElementById('calDetail');
+    const pc=DB.planCheck[dk]||{};
+    const sc=DB.slimChecks[dk]||{};
+    const donePlan=Object.keys(pc).filter(k=>pc[k]);
+    const doneSlim=Object.keys(sc).filter(k=>sc[k]);
+    let html=`<div style="font-weight:700;margin-bottom:6px;">${dk} 打卡详情</div>`;
+    html+='<div><b>计划打卡</b>：'+(donePlan.length?donePlan.join('、'):'无')+'</div>';
+    html+='<div><b>减肥打卡</b>：'+(doneSlim.length?doneSlim.map(k=>SlimChecks.find(c=>c.key===k).label).join('、'):'无')+'</div>';
+    // 当日学习
+    const sr=DB.studyRecords[dk]||{};
+    let sm=0;Object.values(sr).forEach(a=>a.forEach(r=>sm+=+r.minutes||0));
+    const rr=DB.russianRecords[dk]||[];
+    const rm=rr.reduce((a,r)=>a+(+r.minutes||0),0);
+    html+=`<div><b>学习</b>：五科${sm}分钟，俄语${rm}分钟</div>`;
+    box.innerHTML=html;box.classList.add('show');
+  },
+  prev(){Cal.month--;if(Cal.month<0){Cal.month=11;Cal.year--;}Cal.render();},
+  next(){Cal.month++;if(Cal.month>11){Cal.month=0;Cal.year++;}Cal.render();},
+  goToday(){Cal.year=new Date().getFullYear();Cal.month=new Date().getMonth();Cal.render();}
+};
+
+/* ============================================================
+   初始化
+============================================================ */
+window.addEventListener('resize',()=>{
+  if(slimChart)slimChart.resize();
+  if(histStudyChart)histStudyChart.resize();
+  if(histRussianChart)histRussianChart.resize();
+  if(histWeightChart2)histWeightChart2.resize();
+});
+window.addEventListener('DOMContentLoaded',()=>{
+  Plan_render();Study_render();Slim_render();Russian_render();Memo_render();
+  renderTopbar();
+  // 初始化范围按钮高亮
+  document.querySelector('#weightRange [data-range="7"]').classList.add('btn-primary');
+  document.querySelector('#histStudyRange [data-range="7"]').classList.add('btn-primary');
+});
+</script>
+</body>
+</html>
