@@ -320,6 +320,7 @@ input[type=range]{accent-color:var(--purple-3);width:100%;min-height:44px;}
     <div class="nav-item" data-page="study"><i class="fa fa-book"></i><span>学习情况</span></div>
     <div class="nav-item" data-page="slim"><i class="fa fa-tachometer"></i><span>减肥计划</span></div>
     <div class="nav-item" data-page="russian"><i class="fa fa-language"></i><span>俄语学习</span></div>
+    <div class="nav-item" data-page="countdown"><i class="fa fa-calendar-alt"></i><span>倒数日</span></div>
     <div class="nav-item" data-page="memo"><i class="fa fa-sticky-note"></i><span>备忘录</span></div>
     <div class="nav-item" data-page="history"><i class="fa fa-history"></i><span>历史回顾</span></div>
   </nav>
@@ -361,12 +362,6 @@ input[type=range]{accent-color:var(--purple-3);width:100%;min-height:44px;}
     <section class="page" id="page-study">
       <div class="page-title"><i class="fa fa-book"></i>学习情况</div>
       <div class="page-sub">五科学习记录与复习进度，向2027高考冲刺</div>
-
-      <div class="countdown-box section">
-        <div class="cd-lbl">距 2027 年高考倒计时</div>
-        <div class="cd-num" id="cdNum">0</div>
-        <div class="cd-unit">天</div>
-      </div>
 
       <div class="quote-card section" id="studyQuoteCard">
         <span class="q-mark">"</span>
@@ -468,7 +463,19 @@ input[type=range]{accent-color:var(--purple-3);width:100%;min-height:44px;}
       </div>
     </section>
 
-    <!-- 5. 备忘录 -->
+    <!-- 5. 倒数日 -->
+    <section class="page" id="page-countdown">
+      <div class="section-head">
+        <div>
+          <div class="page-title"><i class="fa fa-calendar-alt"></i>倒数日 · 正数日</div>
+          <div class="page-sub">记录重要日期，倒数未来，正数坚持</div>
+        </div>
+        <button class="btn btn-primary" onclick="Countdown.add()"><i class="fa fa-plus"></i>添加目标</button>
+      </div>
+      <div class="grid grid-3" id="countdownGrid"></div>
+    </section>
+
+    <!-- 6. 备忘录 -->
     <section class="page" id="page-memo">
       <div class="page-title"><i class="fa fa-sticky-note"></i>备忘录</div>
       <div class="page-sub">随手记录，不错过任何想法</div>
@@ -481,7 +488,7 @@ input[type=range]{accent-color:var(--purple-3);width:100%;min-height:44px;}
       <div class="record-list" id="memoList"></div>
     </section>
 
-    <!-- 6. 历史回顾 -->
+    <!-- 7. 历史回顾 -->
     <section class="page" id="page-history">
       <div class="page-title"><i class="fa fa-history"></i>历史回顾</div>
       <div class="page-sub">聚合看板，回顾你的坚持轨迹</div>
@@ -658,7 +665,7 @@ function renderVideos(list){
 }
 
 /* ---------- 导航切换 ---------- */
-const pageRenderMap={plan:Plan_render,study:Study_render,slim:Slim_render,russian:Russian_render,memo:Memo_render,history:History_render};
+const pageRenderMap={plan:Plan_render,study:Study_render,slim:Slim_render,russian:Russian_render,countdown:Countdown_render,memo:Memo_render,history:History_render};
 function switchPage(name){
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.dataset.page===name));
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -828,11 +835,6 @@ const Study={
   }
 };
 function Study_render(){
-  // 倒计时
-  const target=new Date('2027-06-07');
-  const now=new Date();
-  const days=Math.ceil((target-now)/(1000*60*60*24));
-  document.getElementById('cdNum').textContent=days>0?days:0;
   // 励志句
   document.getElementById('studyQuoteText').textContent=Quote.get('study');
   // 五科卡片
@@ -1035,6 +1037,118 @@ function Russian_render(){
 }
 
 /* ============================================================
+   模块：倒数日 / 正数日
+   数据独立存储于 localStorage 键名 countdownGoals
+============================================================ */
+const COUNTDOWN_KEY='countdownGoals';
+const Countdown={
+  load(){
+    try{return JSON.parse(localStorage.getItem(COUNTDOWN_KEY))||[];}catch(e){return [];}
+  },
+  save(list){localStorage.setItem(COUNTDOWN_KEY,JSON.stringify(list));},
+  /* 初始化默认目标（仅首次） */
+  init(){
+    if(localStorage.getItem(COUNTDOWN_KEY)===null){
+      this.save([{name:'高考',type:'countdown',date:'2027-06-07'}]);
+    }
+  },
+  add(){
+    /* 用自定义模态框构建表单 */
+    document.getElementById('modalTitle').textContent='添加目标';
+    document.getElementById('modalBody').innerHTML=`
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div><label style="font-size:13px;color:var(--text-light);display:block;margin-bottom:6px;">目标名称</label>
+          <input type="text" class="inp" id="cdName" placeholder="如：考研、生日、坚持跑步"></div>
+        <div><label style="font-size:13px;color:var(--text-light);display:block;margin-bottom:6px;">类型</label>
+          <select class="inp" id="cdType">
+            <option value="countdown">⏳ 倒计时（距离目标还有多少天）</option>
+            <option value="countup">📈 正数日（从起始日已坚持多少天）</option>
+          </select></div>
+        <div><label style="font-size:13px;color:var(--text-light);display:block;margin-bottom:6px;" id="cdDateLabel">目标日期</label>
+          <input type="date" class="inp" id="cdDate"></div>
+      </div>`;
+    /* 隐藏通用输入框，使用 body 内的自定义表单 */
+    document.getElementById('modalInputWrap').style.display='none';
+    document.getElementById('modalOk').textContent='确认添加';
+    document.getElementById('modalOk').onclick=Countdown.confirmAdd;
+    document.getElementById('modalCancel').onclick=Countdown.closeModal;
+    document.getElementById('modal').classList.add('show');
+    /* 类型切换时更新标签 */
+    document.getElementById('cdType').onchange=function(){
+      document.getElementById('cdDateLabel').textContent=this.value==='countdown'?'目标日期':'起始日期';
+    };
+    setTimeout(()=>document.getElementById('cdName').focus(),100);
+  },
+  confirmAdd(){
+    const name=document.getElementById('cdName').value.trim();
+    const type=document.getElementById('cdType').value;
+    const date=document.getElementById('cdDate').value;
+    if(!name){toast('请输入目标名称');return;}
+    if(!date){toast('请选择日期');return;}
+    const list=Countdown.load();
+    list.push({name,type,date});
+    Countdown.save(list);
+    Countdown.closeModal();
+    Countdown_render();
+    toast('已添加');
+  },
+  closeModal(){
+    document.getElementById('modal').classList.remove('show');
+    /* 恢复模态框默认行为 */
+    document.getElementById('modalOk').onclick=confirmModal;
+    document.getElementById('modalCancel').onclick=closeModal;
+  },
+  del(idx){
+    showModal({title:'删除确认',body:'确定要删除这个目标吗？<br><span style="color:#ef4444;">此操作不可恢复。</span>',okText:'删除',onOk:()=>{
+      const list=Countdown.load();
+      list.splice(idx,1);
+      Countdown.save(list);
+      Countdown_render();
+      toast('已删除');
+    }});
+  },
+  /* 计算天数 */
+  calcDays(goal){
+    const today=new Date();today.setHours(0,0,0,0);
+    const target=new Date(goal.date);target.setHours(0,0,0,0);
+    if(goal.type==='countdown'){
+      // 目标日期 - 当前日期
+      const diff=Math.round((target-today)/(1000*60*60*24));
+      if(diff>0)return {text:`还有 ${diff} 天`,past:false};
+      if(diff===0)return {text:'就是今天',past:false};
+      return {text:`已过 ${Math.abs(diff)} 天`,past:true};
+    }else{
+      // countup 正数日：当前日期 - 起始日期
+      const elapsed=Math.round((today-target)/(1000*60*60*24));
+      if(elapsed>=0)return {text:`已坚持 ${elapsed} 天`,past:false};
+      return {text:`${Math.abs(elapsed)} 天后开始`,past:false};
+    }
+  }
+};
+function Countdown_render(){
+  Countdown.init(); /* 首次初始化默认目标 */
+  const list=Countdown.load();
+  const grid=document.getElementById('countdownGrid');
+  grid.innerHTML=list.map((g,i)=>{
+    const r=Countdown.calcDays(g);
+    const typeLabel=g.type==='countdown'?'⏳ 倒计时':'📈 正数日';
+    const numText=r.text.replace(/[^0-9]/g,'');
+    const bigNum=numText?`<span style="font-size:40px;font-weight:800;background:var(--grad-main);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">${numText}</span>`:'';
+    return `<div class="card plan-card">
+      <div class="pc-head">
+        <div class="pc-title"><i class="fa fa-calendar-alt" style="color:var(--purple-3);"></i>${g.name}</div>
+        <button class="del-x" onclick="Countdown.del(${i})"><i class="fa fa-times"></i></button>
+      </div>
+      <div style="font-size:12px;color:var(--text-light);margin:2px 0 8px;">${typeLabel} · ${g.date}</div>
+      <div style="text-align:center;padding:8px 0;">
+        ${bigNum}
+        <div style="font-size:15px;color:${r.past?'#ef4444':'var(--purple-3)'};font-weight:600;margin-top:4px;">${r.text}</div>
+      </div>
+    </div>`;
+  }).join('')||'<div style="font-size:13px;color:var(--text-light);padding:20px;text-align:center;">还没有目标，点右上角"添加目标"开始记录吧</div>';
+}
+
+/* ============================================================
    模块：备忘录
 ============================================================ */
 const Memo={
@@ -1218,7 +1332,7 @@ window.addEventListener('resize',()=>{
   if(histWeightChart2)histWeightChart2.resize();
 });
 window.addEventListener('DOMContentLoaded',()=>{
-  Plan_render();Study_render();Slim_render();Russian_render();Memo_render();
+  Plan_render();Study_render();Slim_render();Russian_render();Countdown_render();Memo_render();
   renderTopbar();
   // 初始化范围按钮高亮
   document.querySelector('#weightRange [data-range="7"]').classList.add('btn-primary');
